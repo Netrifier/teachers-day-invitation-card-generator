@@ -25,7 +25,6 @@ const imageNotFoundTeachers: {
 
 data.forEach((group) =>
   group.forEach((teacher) => {
-    console.log(`${teacher.group}-${teacher.id} ${teacher.name}`);
     const teacherImage = getTeacherImage(
       `./images/${teacher.group}/${teacher.group}-${teacher.id}.jpg`
     );
@@ -33,6 +32,8 @@ data.forEach((group) =>
       imageNotFoundTeachers.push(teacher);
       return;
     }
+
+    // Generate svg
     const svg = generateSVG({
       group: teacher.group,
       id: teacher.id,
@@ -40,18 +41,42 @@ data.forEach((group) =>
       teacherImage: teacherImage,
     });
 
+    // Convert svg to tiff
+    sharp(Buffer.from(svg, "utf-8"), { density: 1000 })
+      .tiff({ quality: 100, compression: "lzw" })
+      .toFile(`generated/tiff/${teacher.group}-${teacher.id}.tiff`)
+      .then(
+        () => (
+          console.log(
+            `TIFF Generated ${teacher.group}-${teacher.id} ${teacher.name}`
+          ),
+          generatedCard++
+        )
+      );
+
     // Convert svg to png
     sharp(Buffer.from(svg, "utf-8"), { density: 1000 })
       .png()
-      .toFile(`generatedpng/${teacher.group}-${teacher.id}.png`);
+      .toFile(`generated/png/${teacher.group}-${teacher.id}.png`)
+      .then(
+        () => (
+          console.log(
+            `PNG Generated ${teacher.group}-${teacher.id} ${teacher.name}`
+          ),
+          generatedCard++
+        )
+      );
 
     // Directly write svg to file
-    // fs.writeFileSync(
-    //   `generated/${teacher.group}-${teacher.id}.svg`,
-    //   svg,
-    //   "utf-8"
-    // );
-    generatedCard++;
+    fs.writeFile(
+      `generated/svg/${teacher.group}-${teacher.id}.svg`,
+      svg,
+      (err) => {
+        console.log(
+          `SVG Generated ${teacher.group}-${teacher.id} ${teacher.name}`
+        );
+      }
+    );
   })
 );
 
@@ -59,8 +84,4 @@ imageNotFoundTeachers.forEach((teacher) =>
   console.log(`NO IMAGE FOUND ${teacher.group}-${teacher.id} ${teacher.name}`)
 );
 
-console.log(
-  "\n",
-  `(Generated ${generatedCard} cards)`,
-  `(Not generated ${imageNotFoundTeachers.length} cards)`
-);
+console.log("\n", `(Not generated ${imageNotFoundTeachers.length} cards)`);
