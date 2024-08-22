@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import sharp from "sharp";
 
 import { data } from "./data";
 import { generateSVG } from "./generateSVG";
@@ -38,11 +39,18 @@ data.forEach((group) =>
       name: teacher.name,
       teacherImage: teacherImage,
     });
-    fs.writeFileSync(
-      `generated/${teacher.group}-${teacher.id}.svg`,
-      svg,
-      "utf-8"
-    );
+
+    // Convert svg to png
+    sharp(Buffer.from(svg, "utf-8"), { density: 1000 })
+      .png()
+      .toFile(`generatedpng/${teacher.group}-${teacher.id}.png`);
+
+    // Directly write svg to file
+    // fs.writeFileSync(
+    //   `generated/${teacher.group}-${teacher.id}.svg`,
+    //   svg,
+    //   "utf-8"
+    // );
     generatedCard++;
   })
 );
